@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroPlay Kids - By Maulana Magribi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark {
+            background-color: #1a1a2e;
+            color: #ffffff;
+        }
+        .bg-gradient-light {
+            background: linear-gradient(to bottom, #BAE6FD, #FFFFFF);
+        }
+        .bg-gradient-dark {
+            background: linear-gradient(to bottom, #16213e, #1a1a2e);
+        }
+        .maze-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+        }
+        .btn-bounce:active {
+            transform: scale(0.9);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+        }
+        .dark .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body id="app-body" class="bg-gradient-light min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- TOP BAR CONTROLS (Moved to Top Left) -->
+    <div class="fixed top-4 left-4 flex gap-2 z-50">
+        <button onclick="toggleDarkMode()" id="theme-btn" class="bg-white dark:bg-gray-800 p-3 rounded-full shadow-lg border-2 border-purple-300 transition-all hover:scale-110">
+            🌙 Mode Gelap
+        </button>
+        <button onclick="toggleMusic()" id="music-btn" class="bg-white dark:bg-gray-800 p-3 rounded-full shadow-lg border-2 border-purple-300 transition-all hover:scale-110">
+            🎵 Musik: Mati
+        </button>
+    </div>
+
+    <!-- MAIN MENU -->
+    <div id="main-menu" class="text-center">
+        <h1 class="text-6xl font-bold text-purple-600 dark:text-purple-400 mb-2 drop-shadow-lg">NeuroPlay Kids</h1>
+        <p class="text-xl text-purple-500 font-bold mb-10 italic">By Maulana Magribi</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            <button onclick="startGame('phonics')" class="btn-bounce bg-orange-400 hover:bg-orange-500 text-white text-2xl font-bold py-8 px-6 rounded-3xl shadow-xl transition-all transform hover:scale-105">
+                🔊 Sound & Word Explorer
+            </button>
+            <button onclick="startGame('emotion')" class="btn-bounce bg-green-500 hover:bg-green-600 text-white text-2xl font-bold py-8 px-6 rounded-3xl shadow-xl transition-all transform hover:scale-105">
+                😊 Emotion Detective
+            </button>
+            <button onclick="startGame('maze')" class="btn-bounce bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold py-8 px-6 rounded-3xl shadow-xl transition-all transform hover:scale-105">
+                🧩 Mini Problem Solver
+            </button>
+            <button onclick="showRewards()" class="btn-bounce bg-purple-500 hover:bg-purple-600 text-white text-2xl font-bold py-8 px-6 rounded-3xl shadow-xl transition-all transform hover:scale-105">
+                ⭐ Hadiah Saya
+            </button>
+        </div>
+    </div>
+
+    <!-- PHONICS GAME -->
+    <div id="phonics-game" class="hidden text-center w-full max-w-3xl">
+        <div class="flex justify-between items-center mb-6">
+            <button onclick="backToMenu()" class="bg-white dark:bg-gray-700 px-4 py-2 rounded-full shadow font-bold hover:text-purple-600">⬅ Kembali</button>
+            <div class="text-2xl font-bold text-orange-600 bg-white dark:bg-gray-800 px-6 py-2 rounded-full shadow">Tahap <span id="phonics-lvl-tag">1</span>/15</div>
+        </div>
+        <h2 class="text-3xl font-bold text-orange-600 mb-6">Cari benda berawalan huruf:</h2>
+        <div id="letter-display" class="w-32 h-32 bg-orange-100 text-orange-600 text-7xl font-bold flex items-center justify-center rounded-full mx-auto mb-10 border-4 border-orange-400 shadow-inner">A</div>
+        <div id="phonics-options" class="flex flex-wrap justify-center gap-6"></div>
+    </div>
+
+    <!-- EMOTION GAME -->
+    <div id="emotion-game" class="hidden text-center w-full max-w-3xl">
+        <div class="flex justify-between items-center mb-6">
+            <button onclick="backToMenu()" class="bg-white dark:bg-gray-700 px-4 py-2 rounded-full shadow font-bold hover:text-purple-600">⬅ Kembali</button>
+            <div class="text-2xl font-bold text-green-600 bg-white dark:bg-gray-800 px-6 py-2 rounded-full shadow">Tahap <span id="emotion-lvl-tag">1</span>/15</div>
+        </div>
+        <div id="emotion-scenario" class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8 px-4 italic">Budi kehilangan mainannya.</div>
+        <div id="emotion-emoji" class="text-9xl mb-10 transition-all duration-500">🤔</div>
+        <div id="emotion-options" class="flex flex-wrap justify-center gap-4"></div>
+    </div>
+
+    <!-- MAZE GAME -->
+    <div id="maze-game" class="hidden text-center w-full max-w-md">
+        <div class="flex justify-between items-center mb-6">
+            <button onclick="backToMenu()" class="bg-white dark:bg-gray-700 px-4 py-2 rounded-full shadow font-bold hover:text-purple-600">⬅ Kembali</button>
+            <div class="text-2xl font-bold text-blue-600 bg-white dark:bg-gray-800 px-6 py-2 rounded-full shadow">Tahap <span id="maze-lvl-tag">1</span>/15</div>
+        </div>
+        <h2 class="text-2xl font-bold text-blue-600 mb-4">Ayo ke Bintang! ⭐</h2>
+        <div id="maze-container" class="maze-grid bg-blue-100 dark:bg-blue-900 p-2 rounded-xl shadow-inner border-4 border-blue-300"></div>
+        <div class="mt-8 grid grid-cols-3 gap-2 w-48 mx-auto">
+            <div></div>
+            <button onclick="moveMaze(0, -1)" class="bg-blue-500 p-4 rounded-xl text-white font-bold shadow-lg active:bg-blue-700">↑</button>
+            <div></div>
+            <button onclick="moveMaze(-1, 0)" class="bg-blue-500 p-4 rounded-xl text-white font-bold shadow-lg active:bg-blue-700">←</button>
+            <button onclick="moveMaze(0, 1)" class="bg-blue-500 p-4 rounded-xl text-white font-bold shadow-lg active:bg-blue-700">↓</button>
+            <button onclick="moveMaze(1, 0)" class="bg-blue-500 p-4 rounded-xl text-white font-bold shadow-lg active:bg-blue-700">→</button>
+        </div>
+    </div>
+
+    <!-- REWARDS -->
+    <div id="rewards-screen" class="hidden text-center w-full max-w-md">
+        <button onclick="backToMenu()" class="mb-4 text-gray-500 font-bold hover:text-purple-600">⬅ Kembali</button>
+        <h2 class="text-4xl font-bold text-purple-600 mb-8">Hadiah Saya</h2>
+        <div class="glass-card p-8 rounded-3xl shadow-xl border-4 border-purple-200">
+            <div class="text-2xl mb-2">Total Bintang</div>
+            <div class="text-6xl font-bold text-yellow-500 mb-6 flex items-center justify-center">
+                ⭐ <span id="star-count">0</span>
+            </div>
+            <div id="badge-list" class="space-y-2 text-left"></div>
+        </div>
+    </div>
+
+    <!-- OVERLAY FEEDBACK -->
+    <div id="feedback" class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-50 z-50">
+        <div class="bg-white dark:bg-gray-800 p-10 rounded-3xl text-center shadow-2xl border-8 border-yellow-400">
+            <div id="feedback-icon" class="text-8xl mb-4">🎉</div>
+            <div id="feedback-text" class="text-4xl font-bold text-purple-700 dark:text-purple-300">Hebat!</div>
+            <button onclick="closeFeedback()" class="mt-6 bg-green-500 text-white px-10 py-4 rounded-full font-bold text-2xl shadow-lg hover:bg-green-600 transition-colors">Lanjut</button>
+        </div>
+    </div>
+
+    <script>
+        // --- AUDIO ENGINE ---
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        let isMusicPlaying = false;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioCtx();
+        }
+
+        function playSound(freq, type, duration, vol = 0.1) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playCorrectSound() {
+            playSound(523, 'sine', 0.2); 
+            setTimeout(() => playSound(659, 'sine', 0.2), 100);
+            setTimeout(() => {
+                playSound(783, 'sine', 0.4);
+                speak("Hore! Kamu hebat!");
+            }, 200);
+        }
+
+        function playWrongSound() {
+            playSound(150, 'sawtooth', 0.3, 0.05);
+            setTimeout(() => {
+                playSound(110, 'sawtooth', 0.4, 0.05);
+                speak("Ups, coba lagi ya!");
+            }, 100);
+        }
+
+        function speak(text) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'id-ID';
+            utterance.rate = 1.1;
+            utterance.pitch = 1.2;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function toggleMusic() {
+            initAudio();
+            const btn = document.getElementById('music-btn');
+            if (!isMusicPlaying) {
+                startModernMusic();
+                btn.innerText = "🎵 Musik: Nyala";
+                btn.classList.add('bg-green-100');
+            } else {
+                stopMusic();
+                btn.innerText = "🎵 Musik: Mati";
+                btn.classList.remove('bg-green-100');
+            }
+            isMusicPlaying = !isMusicPlaying;
+        }
+
+        function startModernMusic() {
+            const pattern = [261, 329, 392, 523, 392, 329, 349, 440]; 
+            let step = 0;
+            window.musicInterval = setInterval(() => {
+                if (isMusicPlaying) {
+                    const f = pattern[step];
+                    playSound(f, 'square', 0.4, 0.01);
+                    if (step % 2 === 0) playSound(f * 2, 'sine', 0.2, 0.005);
+                    step = (step + 1) % pattern.length;
+                }
+            }, 250);
+        }
+
+        function stopMusic() { clearInterval(window.musicInterval); }
+
+        // --- THEME ---
+        function toggleDarkMode() {
+            const body = document.getElementById('app-body');
+            const btn = document.getElementById('theme-btn');
+            if (body.classList.contains('bg-gradient-light')) {
+                body.classList.replace('bg-gradient-light', 'bg-gradient-dark');
+                body.classList.add('dark');
+                btn.innerText = "☀️ Mode Terang";
+            } else {
+                body.classList.replace('bg-gradient-dark', 'bg-gradient-light');
+                body.classList.remove('dark');
+                btn.innerText = "🌙 Mode Gelap";
+            }
+        }
+
+        // --- GAME DATA (15 LEVELS PER GAME) ---
+        let stars = 0;
+        let badges = new Set();
+        let currentLevel = 0;
+
+        const phonicsLevels = [
+            { letter: 'A', correct: 'Apel', options: ['Apel', 'Bola', 'Cacing'], icons: ['🍎', '⚽', '🐛'] },
+            { letter: 'B', correct: 'Bola', options: ['Gajah', 'Bola', 'Es krim'], icons: ['🐘', '⚽', '🍦'] },
+            { letter: 'C', correct: 'Cacing', options: ['Cacing', 'Ayam', 'Ikan'], icons: ['🐛', '🐔', '🐟'] },
+            { letter: 'D', correct: 'Donat', options: ['Donat', 'Gajah', 'Apel'], icons: ['🍩', '🐘', '🍎'] },
+            { letter: 'E', correct: 'Es Krim', options: ['Bola', 'Ikan', 'Es Krim'], icons: ['⚽', '🐟', '🍦'] },
+            { letter: 'F', correct: 'Foto', options: ['Foto', 'Cacing', 'Donat'], icons: ['📷', '🐛', '🍩'] },
+            { letter: 'G', correct: 'Gajah', options: ['Gajah', 'Apel', 'Ayam'], icons: ['🐘', '🍎', '🐔'] },
+            { letter: 'H', correct: 'Hujan', options: ['Ikan', 'Hujan', 'Bola'], icons: ['🐟', '🌧️', '⚽'] },
+            { letter: 'I', correct: 'Ikan', options: ['Donat', 'Ayam', 'Ikan'], icons: ['🍩', '🐔', '🐟'] },
+            { letter: 'J', correct: 'Jam', options: ['Jam', 'Hujan', 'Foto'], icons: ['⏰', '🌧️', '📷'] },
+            { letter: 'K', correct: 'Kue', options: ['Kue', 'Bola', 'Gajah'], icons: ['🍰', '⚽', '🐘'] },
+            { letter: 'L', correct: 'Lampu', options: ['Jam', 'Lampu', 'Ikan'], icons: ['⏰', '💡', '🐟'] },
+            { letter: 'M', correct: 'Mobil', options: ['Mobil', 'Apel', 'Kue'], icons: ['🚗', '🍎', '🍰'] },
+            { letter: 'N', correct: 'Nanas', options: ['Bola', 'Nanas', 'Hujan'], icons: ['⚽', '🍍', '🌧️'] },
+            { letter: 'O', correct: 'Obat', options: ['Obat', 'Donat', 'Mobil'], icons: ['💊', '🍩', '🚗'] }
+        ];
+
+        const emotionLevels = [
+            { scenario: 'Budi kehilangan mainannya.', correct: 'Sedih', options: ['Senang', 'Sedih', 'Marah'], icons: ['😊', '😢', '😠'], emoji: '😢' },
+            { scenario: 'Siti pergi ke pesta!', correct: 'Senang', options: ['Takut', 'Sedih', 'Senang'], icons: ['😨', '😢', '😊'], emoji: '😊' },
+            { scenario: 'Adik merusak bukuku.', correct: 'Marah', options: ['Marah', 'Senang', 'Sedih'], icons: ['😠', '😊', '😢'], emoji: '😠' },
+            { scenario: 'Melihat petir besar.', correct: 'Takut', options: ['Takut', 'Senang', 'Marah'], icons: ['😨', '😊', '😠'], emoji: '😨' },
+            { scenario: 'Ibu memberiku hadiah.', correct: 'Senang', options: ['Sedih', 'Marah', 'Senang'], icons: ['😢', '😠', '😊'], emoji: '😊' },
+            { scenario: 'Jatuh saat bermain bola.', correct: 'Sedih', options: ['Sedih', 'Senang', 'Marah'], icons: ['😢', '😊', '😠'], emoji: '😢' },
+            { scenario: 'Teman tidak mau berbagi.', correct: 'Marah', options: ['Marah', 'Takut', 'Senang'], icons: ['😠', '😨', '😊'], emoji: '😠' },
+            { scenario: 'Berada di kamar gelap.', correct: 'Takut', options: ['Senang', 'Takut', 'Sedih'], icons: ['😊', '😨', '😢'], emoji: '😨' },
+            { scenario: 'Melihat pelangi indah.', correct: 'Senang', options: ['Senang', 'Marah', 'Sedih'], icons: ['😊', '😠', '😢'], emoji: '😊' },
+            { scenario: 'Minuman tumpah ke baju.', correct: 'Sedih', options: ['Sedih', 'Senang', 'Takut'], icons: ['😢', '😊', '😨'], emoji: '😢' },
+            { scenario: 'Antre sangat lama.', correct: 'Bosan', options: ['Senang', 'Bosan', 'Takut'], icons: ['😊', '🥱', '😨'], emoji: '🥱' },
+            { scenario: 'Menang lomba mewarnai.', correct: 'Bangga', options: ['Bangga', 'Sedih', 'Marah'], icons: ['😎', '😢', '😠'], emoji: '😎' },
+            { scenario: 'Menemukan koin di jalan.', correct: 'Terkejut', options: ['Sedih', 'Terkejut', 'Bosan'], icons: ['😢', '😲', '🥱'], emoji: '😲' },
+            { scenario: 'Mau disuntik dokter.', correct: 'Takut', options: ['Takut', 'Senang', 'Bosan'], icons: ['😨', '😊', '🥱'], emoji: '😨' },
+            { scenario: 'Bisa memakai baju sendiri.', correct: 'Bangga', options: ['Bangga', 'Marah', 'Sedih'], icons: ['😎', '😠', '😢'], emoji: '😎' }
+        ];
+
+        const mazeMaps = [
+            [[0,0,1,0,0],[1,0,1,0,1],[0,0,0,0,0],[0,1,1,1,0],[0,0,0,1,0]], // 1
+            [[0,1,0,0,0],[0,1,0,1,0],[0,0,0,1,0],[1,1,0,1,0],[0,0,0,0,0]], // 2
+            [[0,0,0,0,0],[1,1,1,1,0],[0,0,0,1,0],[0,1,0,0,0],[0,1,1,1,0]], // 3
+            [[0,0,1,0,0],[0,0,0,0,1],[1,0,1,0,0],[0,0,1,1,0],[1,0,0,0,0]], // 4
+            [[0,0,0,1,1],[1,1,0,0,0],[0,0,1,1,0],[0,1,0,0,0],[0,0,0,1,0]], // 5
+            [[0,1,0,0,0],[0,0,0,1,0],[1,1,0,0,0],[0,1,1,1,0],[0,0,0,0,0]], // 6
+            [[0,0,0,0,1],[1,1,1,0,0],[0,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]], // 7
+            [[0,1,1,1,0],[0,0,0,1,0],[1,1,0,1,0],[0,0,0,0,0],[0,1,1,1,0]], // 8
+            [[0,0,0,0,0],[0,1,1,1,1],[0,0,0,0,0],[1,1,1,1,0],[0,0,0,0,0]], // 9
+            [[0,1,0,1,0],[0,1,0,1,0],[0,0,0,0,0],[0,1,0,1,0],[0,1,0,1,0]], // 10
+            [[0,0,0,0,0],[1,1,0,1,1],[0,0,0,0,0],[1,1,0,1,1],[0,0,0,0,0]], // 11
+            [[0,1,1,0,0],[0,0,1,0,1],[1,0,0,0,0],[0,0,1,1,0],[0,0,0,0,0]], // 12
+            [[0,0,0,1,0],[1,1,0,0,0],[0,0,1,1,0],[0,0,0,1,0],[1,1,0,0,0]], // 13
+            [[0,0,0,0,0],[1,0,1,1,1],[0,0,0,0,0],[1,1,1,0,1],[0,0,0,0,0]], // 14
+            [[0,1,0,1,0],[0,0,0,0,0],[1,0,1,0,1],[0,0,0,0,0],[0,1,0,1,0]]  // 15
+        ];
+
+        // --- ENGINE ---
+        function hideAll() {
+            ['main-menu', 'phonics-game', 'emotion-game', 'maze-game', 'rewards-screen'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+        }
+
+        function backToMenu() {
+            hideAll();
+            document.getElementById('main-menu').classList.remove('hidden');
+        }
+
+        function startGame(type) {
+            hideAll();
+            currentLevel = 0;
+            if (type === 'phonics') {
+                document.getElementById('phonics-game').classList.remove('hidden');
+                loadPhonicsLevel();
+            } else if (type === 'emotion') {
+                document.getElementById('emotion-game').classList.remove('hidden');
+                loadEmotionLevel();
+            } else if (type === 'maze') {
+                document.getElementById('maze-game').classList.remove('hidden');
+                charPos = { x: 0, y: 0 };
+                document.getElementById('maze-lvl-tag').innerText = 1;
+                renderMaze();
+            }
+        }
+
+        function loadPhonicsLevel() {
+            const level = phonicsLevels[currentLevel];
+            document.getElementById('phonics-lvl-tag').innerText = currentLevel + 1;
+            document.getElementById('letter-display').innerText = level.letter;
+            const container = document.getElementById('phonics-options');
+            container.innerHTML = '';
+            level.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "bg-white dark:bg-gray-700 border-4 border-orange-200 p-6 rounded-3xl shadow-lg btn-bounce flex flex-col items-center w-36 hover:border-orange-500 transition-all";
+                btn.onclick = () => {
+                    if (opt === level.correct) {
+                        playCorrectSound();
+                        showFeedback("🎉", "Benar!", () => {
+                            stars++;
+                            if (currentLevel < 14) { currentLevel++; loadPhonicsLevel(); }
+                            else { badges.add("Language Explorer 🏅"); backToMenu(); }
+                        });
+                    } else { 
+                        playWrongSound(); 
+                        btn.classList.add('bg-red-100');
+                        setTimeout(() => btn.classList.remove('bg-red-100'), 500);
+                    }
+                };
+                btn.innerHTML = `<span class="text-6xl mb-2">${level.icons[idx]}</span><span class="text-lg font-bold dark:text-white">${opt}</span>`;
+                container.appendChild(btn);
+            });
+        }
+
+        function loadEmotionLevel() {
+            const level = emotionLevels[currentLevel];
+            document.getElementById('emotion-lvl-tag').innerText = currentLevel + 1;
+            document.getElementById('emotion-scenario').innerText = level.scenario;
+            document.getElementById('emotion-emoji').innerText = "🤔";
+            const container = document.getElementById('emotion-options');
+            container.innerHTML = '';
+            level.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "bg-green-500 text-white px-8 py-4 rounded-2xl text-2xl font-bold shadow-lg btn-bounce hover:bg-green-600 transition-colors";
+                btn.onclick = () => {
+                    if (opt === level.correct) {
+                        playCorrectSound();
+                        document.getElementById('emotion-emoji').innerText = level.emoji;
+                        showFeedback("✨", "Hebat!", () => {
+                            stars++;
+                            if (currentLevel < 14) { currentLevel++; loadEmotionLevel(); }
+                            else { badges.add("Emotion Hero 🏅"); backToMenu(); }
+                        });
+                    } else { 
+                        playWrongSound(); 
+                    }
+                };
+                btn.innerHTML = `${level.icons[idx]} ${opt}`;
+                container.appendChild(btn);
+            });
+        }
+
+        let charPos = { x: 0, y: 0 };
+        function renderMaze() {
+            const container = document.getElementById('maze-container');
+            const currentMaze = mazeMaps[currentLevel];
+            container.innerHTML = '';
+            for (let y = 0; y < 5; y++) {
+                for (let x = 0; x < 5; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = "w-full aspect-square flex items-center justify-center rounded-lg transition-all duration-200 border border-blue-200 dark:border-blue-800";
+                    if (currentMaze[y][x] === 1) cell.classList.add('bg-gray-400', 'dark:bg-gray-700');
+                    else cell.classList.add('bg-white', 'dark:bg-gray-800');
+                    
+                    if (x === charPos.x && y === charPos.y) cell.innerHTML = "<span class='text-4xl'>🏃</span>";
+                    else if (x === 4 && y === 4) cell.innerHTML = "<span class='text-4xl'>⭐</span>";
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        function moveMaze(dx, dy) {
+            const nx = charPos.x + dx, ny = charPos.y + dy;
+            const currentMaze = mazeMaps[currentLevel];
+            if (nx >= 0 && nx < 5 && ny >= 0 && ny < 5 && currentMaze[ny][nx] === 0) {
+                charPos.x = nx; charPos.y = ny;
+                renderMaze();
+                if (nx === 4 && ny === 4) {
+                    playCorrectSound();
+                    showFeedback("🏆", "Berhasil!", () => {
+                        stars += 3;
+                        if (currentLevel < 14) { 
+                            currentLevel++; 
+                            charPos = {x:0, y:0}; 
+                            document.getElementById('maze-lvl-tag').innerText = currentLevel + 1;
+                            renderMaze(); 
+                        } else { 
+                            badges.add("Problem Solver 🏅"); 
+                            backToMenu(); 
+                        }
+                    });
+                }
+            } else { 
+                playWrongSound(); 
+            }
+        }
+
+        function showRewards() {
+            hideAll();
+            document.getElementById('rewards-screen').classList.remove('hidden');
+            document.getElementById('star-count').innerText = stars;
+            const list = document.getElementById('badge-list');
+            list.innerHTML = '';
+            badges.forEach(b => {
+                const item = document.createElement('div');
+                item.className = "bg-purple-100 dark:bg-purple-900 p-4 rounded-xl font-bold border-2 border-purple-300";
+                item.innerText = b;
+                list.appendChild(item);
+            });
+            if(badges.size === 0) {
+                list.innerHTML = "<p class='text-center text-gray-500'>Selesaikan game untuk dapat medali!</p>";
+            }
+        }
+
+        let nextAction = null;
+        function showFeedback(icon, text, action) {
+            document.getElementById('feedback-icon').innerText = icon;
+            document.getElementById('feedback-text').innerText = text;
+            document.getElementById('feedback').classList.replace('hidden', 'flex');
+            nextAction = action;
+        }
+
+        function closeFeedback() {
+            document.getElementById('feedback').classList.replace('flex', 'hidden');
+            if (nextAction) nextAction();
+        }
+    </script>
+</body>
+</html>
